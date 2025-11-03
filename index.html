@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Code - عارض الكود</title>
+    <title>Web Code Pro - عارض الكود المتقدم</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -11,10 +11,12 @@
         .btn-secondary { @apply bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center; }
         .btn-success { @apply bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center; }
         .btn-danger { @apply bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center; }
+        .btn-warning { @apply bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center; }
         
         #codeEditor {
             font-family: 'Courier New', monospace;
             line-height: 1.5;
+            tab-size: 2;
         }
         
         .saved-item {
@@ -25,6 +27,29 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+        
+        .library-tag {
+            @apply inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1;
+        }
+        
+        /* تخصيص شريط التمرير للمحرر */
+        #codeEditor::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #codeEditor::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        #codeEditor::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        #codeEditor::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -33,14 +58,14 @@
         <header class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800 mb-2">
                 <i class="fas fa-code text-blue-500 mr-2"></i>
-                Web Code - عارض الكود
+                Web Code Pro - عارض الكود المتقدم
             </h1>
-            <p class="text-gray-600">أنشئ، عاين، واحفظ مشاريعك البرمجية</p>
+            <p class="text-gray-600">يدعم Tailwind CSS, React, Vue.js, ES6+ والمزيد</p>
         </header>
 
-        <!-- أزرار التحكم -->
+        <!-- أزرار التحكم والمكتبات -->
         <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-            <div class="flex flex-wrap gap-3 justify-center">
+            <div class="flex flex-wrap gap-3 justify-center mb-4">
                 <button onclick="runCode()" class="btn-primary">
                     <i class="fas fa-play mr-2"></i>تشغيل المعاينة
                 </button>
@@ -50,6 +75,23 @@
                 <button onclick="copyCurrentCode()" class="btn-secondary">
                     <i class="fas fa-copy mr-2"></i>نسخ الكود
                 </button>
+                <button onclick="insertTemplate()" class="btn-warning">
+                    <i class="fas fa-plus mr-2"></i>إضافة قالب
+                </button>
+            </div>
+            
+            <!-- إعدادات المكتبات -->
+            <div class="border-t pt-4">
+                <h3 class="text-lg font-semibold mb-3 text-center">المكتبات المدعومة:</h3>
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <span class="library-tag">HTML5</span>
+                    <span class="library-tag">CSS3</span>
+                    <span class="library-tag">ES6+</span>
+                    <span class="library-tag">Tailwind CSS</span>
+                    <span class="library-tag">React</span>
+                    <span class="library-tag">Vue.js</span>
+                    <span class="library-tag">Alpine.js</span>
+                </div>
             </div>
         </div>
 
@@ -58,20 +100,23 @@
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="bg-gray-800 text-white px-4 py-2 flex justify-between items-center">
                     <span class="font-medium">
-                        <i class="fas fa-edit mr-2"></i>محرر الكود
+                        <i class="fas fa-edit mr-2"></i>محرر الكود المتقدم
                     </span>
-                    <span class="text-sm text-gray-300">HTML/CSS/JS</span>
+                    <div class="text-sm">
+                        <span class="text-gray-300">يدعم أحدث التقنيات</span>
+                    </div>
                 </div>
                 <textarea 
                     id="codeEditor" 
                     class="w-full h-96 p-4 font-mono text-sm border-0 focus:ring-0 resize-none"
-                    placeholder="أدخل كود HTML هنا..."></textarea>
+                    placeholder="أدخل كود HTML هنا... يمكنك استخدام React, Vue.js, Tailwind CSS وغيرها"></textarea>
             </div>
 
             <!-- منطقة الكود المحفوظ -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-gray-800 text-white px-4 py-2">
-                    <i class="fas fa-history mr-2"></i>الكود المحفوظ
+                <div class="bg-gray-800 text-white px-4 py-2 flex justify-between items-center">
+                    <span><i class="fas fa-history mr-2"></i>الكود المحفوظ</span>
+                    <span class="text-xs text-gray-300">${getSavedCount()} عنصر</span>
                 </div>
                 <div id="savedCodesList" class="p-4 max-h-96 overflow-y-auto">
                     <!-- سيتم ملؤها ديناميكياً -->
@@ -84,10 +129,38 @@
             <div class="bg-white rounded-lg p-6 w-96">
                 <h3 class="text-lg font-bold mb-4">حفظ الكود</h3>
                 <input type="text" id="codeName" placeholder="أدخل اسم للكود" 
-                    class="w-full p-2 border border-gray-300 rounded mb-4">
+                    class="w-full p-2 border border-gray-300 rounded mb-4" onkeypress="handleSaveKeypress(event)">
                 <div class="flex gap-2 justify-end">
                     <button onclick="hideSaveModal()" class="btn-secondary">إلغاء</button>
                     <button onclick="saveCode()" class="btn-primary">حفظ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- نافذة القوالب -->
+        <div id="templateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 w-11/12 max-w-2xl max-h-96 overflow-y-auto">
+                <h3 class="text-lg font-bold mb-4">اختر قالباً</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="selectTemplate('react')" class="p-4 border rounded-lg text-left hover:bg-gray-50">
+                        <h4 class="font-bold text-blue-600">React مع Tailwind</h4>
+                        <p class="text-sm text-gray-600">مكون React بسيط مع Tailwind CSS</p>
+                    </button>
+                    <button onclick="selectTemplate('vue')" class="p-4 border rounded-lg text-left hover:bg-gray-50">
+                        <h4 class="font-bold text-green-600">Vue.js مع Tailwind</h4>
+                        <p class="text-sm text-gray-600">تطبيق Vue.js بسيط مع Tailwind CSS</p>
+                    </button>
+                    <button onclick="selectTemplate('tailwind')" class="p-4 border rounded-lg text-left hover:bg-gray-50">
+                        <h4 class="font-bold text-cyan-600">Tailwind CSS فقط</h4>
+                        <p class="text-sm text-gray-600">صفحة HTML مع Tailwind CSS</p>
+                    </button>
+                    <button onclick="selectTemplate('alpine')" class="p-4 border rounded-lg text-left hover:bg-gray-50">
+                        <h4 class="font-bold text-purple-600">Alpine.js تفاعلي</h4>
+                        <p class="text-sm text-gray-600">صفحة تفاعلية مع Alpine.js</p>
+                    </button>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button onclick="hideTemplateModal()" class="btn-secondary">إلغاء</button>
                 </div>
             </div>
         </div>
@@ -99,71 +172,394 @@
         const savedCodesList = document.getElementById('savedCodesList');
         const saveModal = document.getElementById('saveModal');
         const codeName = document.getElementById('codeName');
+        const templateModal = document.getElementById('templateModal');
         
         // بيانات التطبيق
-        let savedCodes = JSON.parse(localStorage.getItem('webCodeSaved')) || [];
+        let savedCodes = JSON.parse(localStorage.getItem('webCodeProSaved')) || [];
         
+        // القوالب الجاهزة
+        const templates = {
+            react: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق React</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"><\/script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        function App() {
+            const [count, setCount] = useState(0);
+            const [message, setMessage] = useState('مرحباً بك في React!');
+            
+            useEffect(() => {
+                document.title = \`العداد: \${count}\`;
+            }, [count]);
+            
+            return React.createElement('div', { 
+                className: 'bg-white p-8 rounded-lg shadow-lg text-center max-w-md w-full' 
+            }, [
+                React.createElement('h1', { 
+                    key: 'title',
+                    className: 'text-3xl font-bold text-blue-600 mb-4' 
+                }, message),
+                React.createElement('p', {
+                    key: 'count',
+                    className: 'text-2xl mb-6 text-gray-700'
+                }, \`العداد: \${count}\`),
+                React.createElement('div', {
+                    key: 'buttons',
+                    className: 'flex gap-4 justify-center'
+                }, [
+                    React.createElement('button', {
+                        key: 'increment',
+                        onClick: () => setCount(count + 1),
+                        className: 'bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded'
+                    }, 'زيادة'),
+                    React.createElement('button', {
+                        key: 'decrement',
+                        onClick: () => setCount(count - 1),
+                        className: 'bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded'
+                    }, 'تقليل'),
+                    React.createElement('button', {
+                        key: 'reset',
+                        onClick: () => setCount(0),
+                        className: 'bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded'
+                    }, 'إعادة تعيين')
+                ])
+            ]);
+        }
+        
+        ReactDOM.render(React.createElement(App), document.getElementById('root'));
+    <\/script>
+</body>
+</html>`,
+
+            vue: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق Vue.js</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"><\/script>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body class="bg-gradient-to-br from-purple-400 to-pink-500 min-h-screen flex items-center justify-center">
+    <div id="app" class="bg-white/20 backdrop-blur-lg p-8 rounded-2xl shadow-2xl text-center max-w-md w-full border border-white/30">
+        <h1 class="text-4xl font-bold text-white mb-2">{{ title }}</h1>
+        <p class="text-white/80 mb-6">بناء تطبيقات تفاعلية بسهولة مع Vue.js</p>
+        
+        <div class="bg-white/10 p-6 rounded-xl mb-6">
+            <p class="text-3xl font-mono text-white mb-4">{{ counter }}</p>
+            <div class="flex gap-3 justify-center">
+                <button @click="increment" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition transform hover:scale-105">
+                    <i class="fas fa-plus mr-2"></i>زيادة
+                </button>
+                <button @click="decrement" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition transform hover:scale-105">
+                    <i class="fas fa-minus mr-2"></i>تقليل
+                </button>
+                <button @click="reset" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition transform hover:scale-105">
+                    <i class="fas fa-redo mr-2"></i>إعادة
+                </button>
+            </div>
+        </div>
+        
+        <div class="bg-white/10 p-4 rounded-xl">
+            <input 
+                v-model="message" 
+                placeholder="اكتب رسالة هنا..."
+                class="w-full p-3 rounded-lg border border-white/30 bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+            >
+            <p class="text-white mt-3">{{ message }}</p>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+        
+        createApp({
+            setup() {
+                const title = ref('مرحباً بك في Vue.js!');
+                const counter = ref(0);
+                const message = ref('جرب كتابة شيء هنا...');
+                
+                const increment = () => {
+                    counter.value++;
+                };
+                
+                const decrement = () => {
+                    counter.value--;
+                };
+                
+                const reset = () => {
+                    counter.value = 0;
+                };
+                
+                return {
+                    title,
+                    counter,
+                    message,
+                    increment,
+                    decrement,
+                    reset
+                };
+            }
+        }).mount('#app');
+    <\/script>
+</body>
+</html>`,
+
+            tailwind: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تصميم Tailwind CSS</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body class="bg-gradient-to-br from-cyan-500 to-blue-600 min-h-screen">
+    <!-- شريط التنقل -->
+    <nav class="bg-white/10 backdrop-blur-md border-b border-white/20">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-white">شعار الموقع</h1>
+                <div class="flex gap-4">
+                    <a href="#" class="text-white/80 hover:text-white transition">الرئيسية</a>
+                    <a href="#" class="text-white/80 hover:text-white transition">الخدمات</a>
+                    <a href="#" class="text-white/80 hover:text-white transition">من نحن</a>
+                    <a href="#" class="text-white/80 hover:text-white transition">اتصل بنا</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- قسم البطل -->
+    <section class="container mx-auto px-4 py-20 text-center">
+        <h1 class="text-5xl font-bold text-white mb-6">مرحباً بك في موقعنا</h1>
+        <p class="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
+            هذا تصميم جميل باستخدام Tailwind CSS. يمكنك تعديله كما تشاء!
+        </p>
+        <div class="flex gap-4 justify-center">
+            <button class="bg-white text-cyan-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105">
+                ابدأ الآن
+            </button>
+            <button class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition">
+                اعرف المزيد
+            </button>
+        </div>
+    </section>
+
+    <!-- بطاقات الخدمات -->
+    <section class="container mx-auto px-4 py-16">
+        <h2 class="text-3xl font-bold text-white text-center mb-12">خدماتنا</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/20 text-white">
+                <div class="text-3xl mb-4">🚀</div>
+                <h3 class="text-xl font-bold mb-3">تطوير سريع</h3>
+                <p class="text-white/80">نقدم حلول تطوير سريعة وفعالة باستخدام أحدث التقنيات.</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/20 text-white">
+                <div class="text-3xl mb-4">🎨</div>
+                <h3 class="text-xl font-bold mb-3">تصميم مبتكر</h3>
+                <p class="text-white/80">تصاميم حديثة وجذابة تلبي احتياجاتك وتناسب علامتك التجارية.</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/20 text-white">
+                <div class="text-3xl mb-4">⚡</div>
+                <h3 class="text-xl font-bold mb-3">أداء عالي</h3>
+                <p class="text-white/80">حلول مُحسنة لأعلى أداء وسرعة في التحميل والتشغيل.</p>
+            </div>
+        </div>
+    </section>
+</body>
+</html>`,
+
+            alpine: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpine.js تفاعلي</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"><\/script>
+</head>
+<body class="bg-gradient-to-br from-orange-400 to-red-500 min-h-screen flex items-center justify-center p-4">
+    <div x-data="app()" class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+        <!-- رأس التطبيق -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2" x-text="title"></h1>
+            <p class="text-gray-600">تجربة Alpine.js تفاعلية</p>
+        </div>
+
+        <!-- العداد -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-500 p-6 rounded-xl text-center mb-6">
+            <p class="text-4xl font-bold text-white mb-4" x-text="counter"></p>
+            <div class="flex gap-2 justify-center">
+                <button @click="increment" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition backdrop-blur-sm">
+                    ➕ زيادة
+                </button>
+                <button @click="decrement" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition backdrop-blur-sm">
+                    ➖ تقليل
+                </button>
+            </div>
+        </div>
+
+        <!-- المدخلات التفاعلية -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">اسمك:</label>
+                <input 
+                    type="text" 
+                    x-model="name"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="اكتب اسمك هنا..."
+                >
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">لون المفضل:</label>
+                <select x-model="color" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="blue">أزرق</option>
+                    <option value="red">أحمر</option>
+                    <option value="green">أخضر</option>
+                    <option value="purple">بنفسجي</option>
+                </select>
+            </div>
+
+            <!-- عرض النتائج -->
+            <div x-show="name" class="bg-gray-50 p-4 rounded-lg border">
+                <h3 class="font-semibold text-gray-800 mb-2">مرحباً <span x-text="name" class="text-blue-600"></span>! 👋</h3>
+                <p class="text-gray-600" x-text="getColorMessage()"></p>
+            </div>
+
+            <!-- تبديل الظهور -->
+            <div class="text-center">
+                <button 
+                    @click="toggleExtraInfo()"
+                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
+                    x-text="showExtraInfo ? 'إخفاء التفاصيل' : 'عرض التفاصيل'"
+                ></button>
+                
+                <div x-show="showExtraInfo" x-transition class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-yellow-800">هذه معلومات إضافية تظهر عند الضغط على الزر!</p>
+                    <p class="text-sm text-yellow-600 mt-2">Alpine.js مثالي للتطبيقات البسيطة دون الحاجة لمكتبات كبيرة.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function app() {
+            return {
+                title: 'Alpine.js تفاعلي',
+                counter: 0,
+                name: '',
+                color: 'blue',
+                showExtraInfo: false,
+                
+                increment() {
+                    this.counter++;
+                },
+                
+                decrement() {
+                    this.counter--;
+                },
+                
+                toggleExtraInfo() {
+                    this.showExtraInfo = !this.showExtraInfo;
+                },
+                
+                getColorMessage() {
+                    const messages = {
+                        blue: 'اللون الأزرق يرمز للهدوء والثقة!',
+                        red: 'اللون الأحمر يرمز للطاقة والشغف!',
+                        green: 'اللون الأخضر يرمز للنمو والطبيعة!',
+                        purple: 'اللون البنفسجي يرمز للإبداع والروحانية!'
+                    };
+                    return messages[this.color] || 'اختر لونك المفضل!';
+                }
+            };
+        }
+    <\/script>
+</body>
+</html>`
+        };
+
         // تهيئة التطبيق
         function initApp() {
             updateSavedCodesList();
             
-            // إذا لم يكن هناك أكواد محفوظة، أضف نموذج "مرحباً بالعالم"
+            // إذا لم يكن هناك أكواد محفوظة، أضف نموذج ترحيبي
             if (savedCodes.length === 0) {
                 const welcomeCode = {
                     id: Date.now(),
-                    name: "مرحباً بالعالم",
+                    name: "دليل الاستخدام",
                     code: `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>مرحباً بالعالم</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-        }
-        .container {
-            background: rgba(255,255,255,0.1);
-            padding: 40px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        }
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل استخدام Web Code Pro</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
 </head>
-<body>
-    <div class="container">
-        <h1>مرحباً بالعالم! 🌍</h1>
-        <p>أهلاً بك في عارض الكود المتقدم</p>
+<body class="bg-gradient-to-br from-indigo-500 to-purple-600 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">🚀 Web Code Pro</h1>
+            <p class="text-xl text-gray-600">عارض الكود المتقدم</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 class="font-bold text-blue-700 mb-2">📚 المكتبات المدعومة</h3>
+                <ul class="text-sm text-blue-600 list-disc list-inside">
+                    <li>React.js</li>
+                    <li>Vue.js</li>
+                    <li>Tailwind CSS</li>
+                    <li>Alpine.js</li>
+                    <li>ES6+ JavaScript</li>
+                </ul>
+            </div>
+            
+            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h3 class="font-bold text-green-700 mb-2">⚡ المميزات</h3>
+                <ul class="text-sm text-green-600 list-disc list-inside">
+                    <li>معاينة فورية</li>
+                    <li>حفظ واسترجاع</li>
+                    <li>قوالب جاهزة</li>
+                    <li>نسخ الكود</li>
+                    <li>واجهة عربية</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 class="font-bold text-yellow-700 mb-2">💡 نصائح سريعة</h3>
+            <p class="text-sm text-yellow-600">
+                استخدم زر "إضافة قالب" لبدء سريع مع React, Vue.js, أو Tailwind CSS.
+                يمكنك حفظ أكوادك واسترجاعها لاحقاً.
+            </p>
+        </div>
     </div>
 </body>
 </html>`,
-                    date: new Date().toLocaleString('ar-EG')
+                    date: new Date().toLocaleString('ar-EG'),
+                    type: 'html'
                 };
                 savedCodes.push(welcomeCode);
-                localStorage.setItem('webCodeSaved', JSON.stringify(savedCodes));
+                localStorage.setItem('webCodeProSaved', JSON.stringify(savedCodes));
                 updateSavedCodesList();
             }
         }
         
-        // تشغيل الكود في نافذة جديدة
+        // تشغيل الكود في نافذة جديدة مع دعم المكتبات
         function runCode() {
             const code = codeEditor.value;
             if (!code.trim()) {
@@ -171,9 +567,19 @@
                 return;
             }
             
-            const previewWindow = window.open('', '_blank');
-            previewWindow.document.write(code);
-            previewWindow.document.close();
+            try {
+                const previewWindow = window.open('', '_blank');
+                
+                // كتابة المحتوى مع معالجة الأخطاء
+                previewWindow.document.write(code);
+                previewWindow.document.close();
+                
+                // التركيز على النافذة الجديدة
+                previewWindow.focus();
+            } catch (error) {
+                console.error('Error opening preview:', error);
+                alert('حدث خطأ أثناء فتح نافذة المعاينة. تأكد من أن المتصفح يسمح بالنوافذ المنبثقة.');
+            }
         }
         
         // عرض نافذة الحفظ
@@ -194,6 +600,15 @@
             saveModal.classList.add('hidden');
         }
         
+        // التعامل مع ضغطات المفاتيح في نافذة الحفظ
+        function handleSaveKeypress(event) {
+            if (event.key === 'Enter') {
+                saveCode();
+            } else if (event.key === 'Escape') {
+                hideSaveModal();
+            }
+        }
+        
         // حفظ الكود
         function saveCode() {
             const name = codeName.value.trim();
@@ -206,16 +621,26 @@
                 id: Date.now(),
                 name: name,
                 code: codeEditor.value,
-                date: new Date().toLocaleString('ar-EG')
+                date: new Date().toLocaleString('ar-EG'),
+                type: detectCodeType(codeEditor.value)
             };
             
             savedCodes.push(newCode);
-            localStorage.setItem('webCodeSaved', JSON.stringify(savedCodes));
+            localStorage.setItem('webCodeProSaved', JSON.stringify(savedCodes));
             updateSavedCodesList();
             hideSaveModal();
             
             // إظهار رسالة نجاح
-            alert('تم حفظ الكود بنجاح!');
+            showTempMessage('تم حفظ الكود بنجاح!', 'success');
+        }
+        
+        // اكتشاف نوع الكود
+        function detectCodeType(code) {
+            if (code.includes('React') || code.includes('react')) return 'react';
+            if (code.includes('Vue') || code.includes('vue')) return 'vue';
+            if (code.includes('alpine') || code.includes('Alpine') || code.includes('x-data')) return 'alpine';
+            if (code.includes('tailwind') || code.includes('Tailwind')) return 'tailwind';
+            return 'html';
         }
         
         // نسخ الكود الحالي
@@ -225,9 +650,14 @@
                 return;
             }
             
-            codeEditor.select();
-            document.execCommand('copy');
-            alert('تم نسخ الكود إلى الحافظة');
+            navigator.clipboard.writeText(codeEditor.value)
+                .then(() => showTempMessage('تم نسخ الكود إلى الحافظة', 'success'))
+                .catch(() => {
+                    // طريقة بديلة إذا لم تعمل Clipboard API
+                    codeEditor.select();
+                    document.execCommand('copy');
+                    showTempMessage('تم نسخ الكود إلى الحافظة', 'success');
+                });
         }
         
         // نسخ كود محفوظ
@@ -235,16 +665,15 @@
             const codeItem = savedCodes.find(item => item.id === id);
             if (codeItem) {
                 navigator.clipboard.writeText(codeItem.code)
-                    .then(() => alert('تم نسخ الكود إلى الحافظة'))
+                    .then(() => showTempMessage('تم نسخ الكود إلى الحافظة', 'success'))
                     .catch(() => {
-                        // طريقة بديلة إذا لم تعمل Clipboard API
                         const tempTextArea = document.createElement('textarea');
                         tempTextArea.value = codeItem.code;
                         document.body.appendChild(tempTextArea);
                         tempTextArea.select();
                         document.execCommand('copy');
                         document.body.removeChild(tempTextArea);
-                        alert('تم نسخ الكود إلى الحافظة');
+                        showTempMessage('تم نسخ الكود إلى الحافظة', 'success');
                     });
             }
         }
@@ -253,9 +682,9 @@
         function deleteSavedCode(id) {
             if (confirm('هل أنت متأكد من حذف هذا الكود؟')) {
                 savedCodes = savedCodes.filter(item => item.id !== id);
-                localStorage.setItem('webCodeSaved', JSON.stringify(savedCodes));
+                localStorage.setItem('webCodeProSaved', JSON.stringify(savedCodes));
                 updateSavedCodesList();
-                alert('تم حذف الكود بنجاح');
+                showTempMessage('تم حذف الكود بنجاح', 'success');
             }
         }
         
@@ -266,6 +695,7 @@
                 const previewWindow = window.open('', '_blank');
                 previewWindow.document.write(codeItem.code);
                 previewWindow.document.close();
+                previewWindow.focus();
             }
         }
         
@@ -274,7 +704,54 @@
             const codeItem = savedCodes.find(item => item.id === id);
             if (codeItem) {
                 codeEditor.value = codeItem.code;
+                showTempMessage('تم تحميل الكود إلى المحرر', 'info');
             }
+        }
+        
+        // إظهار نافذة القوالب
+        function insertTemplate() {
+            templateModal.classList.remove('hidden');
+            templateModal.classList.add('flex');
+        }
+        
+        // إخفاء نافذة القوالب
+        function hideTemplateModal() {
+            templateModal.classList.remove('flex');
+            templateModal.classList.add('hidden');
+        }
+        
+        // اختيار قالب
+        function selectTemplate(templateKey) {
+            if (templates[templateKey]) {
+                codeEditor.value = templates[templateKey];
+                hideTemplateModal();
+                showTempMessage(`تم تحميل قالب ${templateKey}`, 'success');
+            }
+        }
+        
+        // عرض رسالة مؤقتة
+        function showTempMessage(message, type = 'info') {
+            const messageDiv = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : 
+                           type === 'error' ? 'bg-red-500' : 
+                           'bg-blue-500';
+            
+            messageDiv.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-opacity duration-300`;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(messageDiv);
+                }, 300);
+            }, 3000);
+        }
+        
+        // الحصول على عدد العناصر المحفوظة
+        function getSavedCount() {
+            return savedCodes.length;
         }
         
         // تحديث قائمة الكود المحفوظ
@@ -284,10 +761,16 @@
                 return;
             }
             
-            savedCodesList.innerHTML = savedCodes.map(item => `
+            // عكس الترتيب لعرض أحدث العناصر أولاً
+            const reversedCodes = [...savedCodes].reverse();
+            
+            savedCodesList.innerHTML = reversedCodes.map(item => `
                 <div class="saved-item bg-white border border-gray-200 rounded-lg p-4 mb-3 shadow-sm">
                     <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
+                            <span class="text-xs text-gray-500 ${getTypeColor(item.type)}">${getTypeName(item.type)}</span>
+                        </div>
                         <span class="text-sm text-gray-500">${item.date}</span>
                     </div>
                     <div class="flex flex-wrap gap-2 mt-3">
@@ -308,8 +791,40 @@
             `).join('');
         }
         
+        // الحصول على اسم النوع
+        function getTypeName(type) {
+            const names = {
+                'react': 'React',
+                'vue': 'Vue.js',
+                'alpine': 'Alpine.js',
+                'tailwind': 'Tailwind CSS',
+                'html': 'HTML'
+            };
+            return names[type] || 'HTML';
+        }
+        
+        // الحصول على لون النوع
+        function getTypeColor(type) {
+            const colors = {
+                'react': 'text-blue-600',
+                'vue': 'text-green-600',
+                'alpine': 'text-purple-600',
+                'tailwind': 'text-cyan-600',
+                'html': 'text-gray-600'
+            };
+            return colors[type] || 'text-gray-600';
+        }
+        
         // تهيئة التطبيق عند تحميل الصفحة
         document.addEventListener('DOMContentLoaded', initApp);
+        
+        // إضافة اختصارات لوحة المفاتيح
+        document.addEventListener('keydown', function(event) {
+            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+                event.preventDefault();
+                showSaveModal();
+            }
+        });
     </script>
 </body>
-</html>
+                            </html>
