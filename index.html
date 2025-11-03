@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Code - عارض الكود</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .btn-primary { @apply bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center; }
+        .btn-secondary { @apply bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center; }
+        .btn-success { @apply bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center; }
+        .btn-danger { @apply bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center; }
+        
+        #codeEditor {
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+        }
+        
+        .saved-item {
+            transition: all 0.3s ease;
+        }
+        
+        .saved-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- الهيدر -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-code text-blue-500 mr-2"></i>
+                Web Code - عارض الكود
+            </h1>
+            <p class="text-gray-600">أنشئ، عاين، واحفظ مشاريعك البرمجية</p>
+        </header>
+
+        <!-- أزرار التحكم -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="flex flex-wrap gap-3 justify-center">
+                <button onclick="runCode()" class="btn-primary">
+                    <i class="fas fa-play mr-2"></i>تشغيل المعاينة
+                </button>
+                <button onclick="showSaveModal()" class="btn-secondary">
+                    <i class="fas fa-save mr-2"></i>حفظ الكود
+                </button>
+                <button onclick="copyCurrentCode()" class="btn-secondary">
+                    <i class="fas fa-copy mr-2"></i>نسخ الكود
+                </button>
+            </div>
+        </div>
+
+        <!-- منطقة الإدخال -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gray-800 text-white px-4 py-2 flex justify-between items-center">
+                    <span class="font-medium">
+                        <i class="fas fa-edit mr-2"></i>محرر الكود
+                    </span>
+                    <span class="text-sm text-gray-300">HTML/CSS/JS</span>
+                </div>
+                <textarea 
+                    id="codeEditor" 
+                    class="w-full h-96 p-4 font-mono text-sm border-0 focus:ring-0 resize-none"
+                    placeholder="أدخل كود HTML هنا..."></textarea>
+            </div>
+
+            <!-- منطقة الكود المحفوظ -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gray-800 text-white px-4 py-2">
+                    <i class="fas fa-history mr-2"></i>الكود المحفوظ
+                </div>
+                <div id="savedCodesList" class="p-4 max-h-96 overflow-y-auto">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </div>
+        </div>
+
+        <!-- نافذة حفظ الكود -->
+        <div id="saveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 w-96">
+                <h3 class="text-lg font-bold mb-4">حفظ الكود</h3>
+                <input type="text" id="codeName" placeholder="أدخل اسم للكود" 
+                    class="w-full p-2 border border-gray-300 rounded mb-4">
+                <div class="flex gap-2 justify-end">
+                    <button onclick="hideSaveModal()" class="btn-secondary">إلغاء</button>
+                    <button onclick="saveCode()" class="btn-primary">حفظ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // العناصر الرئيسية
+        const codeEditor = document.getElementById('codeEditor');
+        const savedCodesList = document.getElementById('savedCodesList');
+        const saveModal = document.getElementById('saveModal');
+        const codeName = document.getElementById('codeName');
+        
+        // بيانات التطبيق
+        let savedCodes = JSON.parse(localStorage.getItem('webCodeSaved')) || [];
+        
+        // تهيئة التطبيق
+        function initApp() {
+            updateSavedCodesList();
+            
+            // إذا لم يكن هناك أكواد محفوظة، أضف نموذج "مرحباً بالعالم"
+            if (savedCodes.length === 0) {
+                const welcomeCode = {
+                    id: Date.now(),
+                    name: "مرحباً بالعالم",
+                    code: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>مرحباً بالعالم</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>مرحباً بالعالم! 🌍</h1>
+        <p>أهلاً بك في عارض الكود المتقدم</p>
+    </div>
+</body>
+</html>`,
+                    date: new Date().toLocaleString('ar-EG')
+                };
+                savedCodes.push(welcomeCode);
+                localStorage.setItem('webCodeSaved', JSON.stringify(savedCodes));
+                updateSavedCodesList();
+            }
+        }
+        
+        // تشغيل الكود في نافذة جديدة
+        function runCode() {
+            const code = codeEditor.value;
+            if (!code.trim()) {
+                alert('الرجاء إدخال كود HTML أولاً');
+                return;
+            }
+            
+            const previewWindow = window.open('', '_blank');
+            previewWindow.document.write(code);
+            previewWindow.document.close();
+        }
+        
+        // عرض نافذة الحفظ
+        function showSaveModal() {
+            if (!codeEditor.value.trim()) {
+                alert('الرجاء إدخال كود HTML أولاً');
+                return;
+            }
+            codeName.value = '';
+            saveModal.classList.remove('hidden');
+            saveModal.classList.add('flex');
+            codeName.focus();
+        }
+        
+        // إخفاء نافذة الحفظ
+        function hideSaveModal() {
+            saveModal.classList.remove('flex');
+            saveModal.classList.add('hidden');
+        }
+        
+        // حفظ الكود
+        function saveCode() {
+            const name = codeName.value.trim();
+            if (!name) {
+                alert('الرجاء إدخال اسم للكود');
+                return;
+            }
+            
+            const newCode = {
+                id: Date.now(),
+                name: name,
+                code: codeEditor.value,
+                date: new Date().toLocaleString('ar-EG')
+            };
+            
+            savedCodes.push(newCode);
+            localStorage.setItem('webCodeSaved', JSON.stringify(savedCodes));
+            updateSavedCodesList();
+            hideSaveModal();
+            
+            // إظهار رسالة نجاح
+            alert('تم حفظ الكود بنجاح!');
+        }
+        
+        // نسخ الكود الحالي
+        function copyCurrentCode() {
+            if (!codeEditor.value.trim()) {
+                alert('لا يوجد كود للنسخ');
+                return;
+            }
+            
+            codeEditor.select();
+            document.execCommand('copy');
+            alert('تم نسخ الكود إلى الحافظة');
+        }
+        
+        // نسخ كود محفوظ
+        function copySavedCode(id) {
+            const codeItem = savedCodes.find(item => item.id === id);
+            if (codeItem) {
+                navigator.clipboard.writeText(codeItem.code)
+                    .then(() => alert('تم نسخ الكود إلى الحافظة'))
+                    .catch(() => {
+                        // طريقة بديلة إذا لم تعمل Clipboard API
+                        const tempTextArea = document.createElement('textarea');
+                        tempTextArea.value = codeItem.code;
+                        document.body.appendChild(tempTextArea);
+                        tempTextArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempTextArea);
+                        alert('تم نسخ الكود إلى الحافظة');
+                    });
+            }
+        }
+        
+        // حذف كود محفوظ
+        function deleteSavedCode(id) {
+            if (confirm('هل أنت متأكد من حذف هذا الكود؟')) {
+                savedCodes = savedCodes.filter(item => item.id !== id);
+                localStorage.setItem('webCodeSaved', JSON.stringify(savedCodes));
+                updateSavedCodesList();
+                alert('تم حذف الكود بنجاح');
+            }
+        }
+        
+        // عرض كود محفوظ
+        function viewSavedCode(id) {
+            const codeItem = savedCodes.find(item => item.id === id);
+            if (codeItem) {
+                const previewWindow = window.open('', '_blank');
+                previewWindow.document.write(codeItem.code);
+                previewWindow.document.close();
+            }
+        }
+        
+        // تحميل كود محفوظ إلى المحرر
+        function loadSavedCode(id) {
+            const codeItem = savedCodes.find(item => item.id === id);
+            if (codeItem) {
+                codeEditor.value = codeItem.code;
+            }
+        }
+        
+        // تحديث قائمة الكود المحفوظ
+        function updateSavedCodesList() {
+            if (savedCodes.length === 0) {
+                savedCodesList.innerHTML = '<p class="text-gray-500 text-center py-8">لا توجد أي أكواد محفوظة بعد</p>';
+                return;
+            }
+            
+            savedCodesList.innerHTML = savedCodes.map(item => `
+                <div class="saved-item bg-white border border-gray-200 rounded-lg p-4 mb-3 shadow-sm">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
+                        <span class="text-sm text-gray-500">${item.date}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <button onclick="loadSavedCode(${item.id})" class="btn-secondary text-sm">
+                            <i class="fas fa-edit mr-1"></i>تحميل
+                        </button>
+                        <button onclick="viewSavedCode(${item.id})" class="btn-success text-sm">
+                            <i class="fas fa-eye mr-1"></i>عرض
+                        </button>
+                        <button onclick="copySavedCode(${item.id})" class="btn-secondary text-sm">
+                            <i class="fas fa-copy mr-1"></i>نسخ
+                        </button>
+                        <button onclick="deleteSavedCode(${item.id})" class="btn-danger text-sm">
+                            <i class="fas fa-trash mr-1"></i>حذف
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // تهيئة التطبيق عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
